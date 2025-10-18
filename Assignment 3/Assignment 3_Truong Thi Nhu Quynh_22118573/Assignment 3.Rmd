@@ -1,0 +1,83 @@
+---
+title: "Assignment 3"
+author: "Truong Thi Nhu Quynh_22118573"
+output: html_document
+  word_document:
+    toc: true
+  pdf_document:
+    toc: true
+    number_sections: true
+    latex_engine: xelatex
+---
+## Assignment Declaration
+
+Ensure this declaration is visible and readable on the cover page.
+
+***
+
+By including this statement, we the authors of this work, verify that:
+* We hold a copy of this assignment that we can produce if the original is lost or damaged. 
+* We hereby certify that no part of this assignment/product has been copied from any other student's work or from any other source except where due acknowledgement is made in the assignment. 
+* No part of this assignment/product has been written/produced for us by another person except where such collaboration has been authorised by the subject lecturer/tutor concerned. 
+* We are aware that this work may be reproduced and submitted to plagiarism detection software programs for the purpose of detecting possible plagiarism (which may retain a copy on its database for future plagiarism checking). 
+* We hereby certify that we have read and understand what the School of Computing, Engineering and Mathematics defines as minor and substantial breaches of misconduct as outlined in the learning guide for this unit. 
+
+***
+**Note:** An examiner or lecturer/tutor has the right not to mark this project report if the above declaration has not been added to the cover of the report.
+**Note on GenAI Use:** No Generative AI use is allowed for this assignment. You can use extra library you think it is useful in your assignment. Please also be reassured that the data used in this assignment is syntethic records.
+
+##Solution 
+#First, I start with loading the libraries and datasets
+#Load libraries
+```{r}
+library(tidyverse)
+library(lubridate)
+library(kableExtra)
+```
+#Load and examine dataset
+```{r}
+conditions <- read.csv("conditionsUG.csv")
+encounters <- read.csv("encountersUG.csv")
+patients <- read.csv("patientsUG.csv")
+str(conditions)
+str(encounters)
+str(patients)
+```
+###Question 1 
+#Now, I analyze the distribution of COVID patients across counties
+```{r}
+#1. Filter conditions to find COVID patients (confirmed or suspected)
+covid_patients_id <- conditions %>%
+  # Using filter and str_detect to find keyword "COVID" in Description
+  filter(str_detect(DESCRIPTION, regex("COVID", ignore_case = TRUE))) %>%
+  distinct(PATIENT) %>%
+  # Rename "patient" to "Id" to fit with "Id" column in patients dataset
+  rename(Id = PATIENT)
+# 2. Join covid_patients_id with patients using ID
+covid_patients_with_county <- patients %>%
+  inner_join(covid_patients_id, by = "Id") %>%
+  select(Id, COUNTY)
+# 3. Create a pivot table: Group by County and count the number of COVID patients
+county_distribution <- covid_patients_with_county %>%
+  count(COUNTY, name = "Patient_Count", sort = TRUE)
+
+# Print results (Sorted summary table)
+county_distribution
+
+# 4. Display the summary table
+kable(county_distribution, caption = "Distribution of COVID patients across counties") %>%
+kable_styling(full_width = FALSE)
+# 5. Create the histogram (bar chart) visualization for County distribution
+county_plot <- county_distribution %>%
+  ggplot(aes(x = reorder(COUNTY, -Patient_Count), y = Patient_Count)) +
+  geom_bar(stat = "identity", fill = "#3399FF") + 
+  labs(title = "COVID-19 Patient Distribution Across Counties",
+       x = "County",
+       y = "Number of COVID Patients") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) 
+
+county_plot
+```
+#The histogram clearly illustrates that the distribution of COVID-19 patients is highly uneven (skewed) across the counties. There is a significant disparity in patient counts, with Middlesex County reporting over 1,500 cases, which is substantially higher than other large counties like Worcester and over a hundred times greater than the sparsely populated counties of Dukes and Nantucket. This stark difference is primarily attributable to variations in population size and density, as major metropolitan areas typically serve as hubs for both residence and service use, leading to higher population totals and consequently, higher absolute case counts.
+
