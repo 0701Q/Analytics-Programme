@@ -1,1 +1,14 @@
+# macOS system files
 .DS_Store
+ # Thêm một dòng trống
+# R files
+.Rproj
+.Rhistory
+.RData
+ # Thêm một dòng trống
+# Ignored Data
+*.csv # Bỏ qua các tệp CSV
+*.zip # Bỏ qua các tệp ZIP
+ # Thêm một dòng trống
+# Folders
+*/*/.DS_Store
