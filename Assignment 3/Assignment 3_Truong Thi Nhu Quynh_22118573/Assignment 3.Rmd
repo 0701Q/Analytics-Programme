@@ -1,15 +1,31 @@
 ---
-<!-- sync test: Q2 final update -->
 title: "Assignment 3"
 author: "Truong Thi Nhu Quynh_22118573"
-output: html_document
+always_allow_html: true
+output:
   word_document:
     toc: true
-  pdf_document:
+  html_document:
     toc: true
     number_sections: true
-    latex_engine: xelatex
+    css: |
+      table {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE, 
+                      warning = FALSE) 
+center_kable <- function(df, caption = NULL, file = "table.png", width = NULL){
+  kb <- knitr::kable(df, caption = caption, format = "html") |>
+    kableExtra::kable_styling(full_width = FALSE, bootstrap_options = c("striped","hover"))
+  kableExtra::save_kable(kb, file = file, zoom = 2)  
+  knitr::include_graphics(file)
+}
+```
 ## Assignment Declaration
 
 Ensure this declaration is visible and readable on the cover page.
@@ -27,15 +43,15 @@ By including this statement, we the authors of this work, verify that:
 **Note:** An examiner or lecturer/tutor has the right not to mark this project report if the above declaration has not been added to the cover of the report.
 **Note on GenAI Use:** No Generative AI use is allowed for this assignment. You can use extra library you think it is useful in your assignment. Please also be reassured that the data used in this assignment is syntethic records.
 
-##Solution 
-#First, I start with loading the libraries and datasets
-#Load libraries
+## Solution 
+# First, I start with loading the libraries and datasets
+# Load libraries
 ```{r}
 library(tidyverse)
 library(lubridate)
 library(kableExtra)
 ```
-#Load and examine dataset
+# Load and examine dataset
 ```{r}
 conditions <- read.csv("conditionsUG.csv")
 encounters <- read.csv("encountersUG.csv")
@@ -44,15 +60,15 @@ str(conditions)
 str(encounters)
 str(patients)
 ```
-###Question 1 
-##Task explanation
+### Question 1 
+## Task explanation
 
 
 This question aims to analyse how COVID-19 patients are distributed geographically (by county) and demographically (by age group).
 The analysis involves identifying patients diagnosed or suspected with COVID-19, then visualising their distribution using histograms (bar charts).
 
-##Analysis 1: The distribution of COVID patients across counties
-```{r}
+## Analysis 1: The distribution of COVID patients across counties
+```{r, fig.align='center', fig.cap='Distribution of COVID patients across counties', out.width='90%'}
 #1. Filter conditions to find COVID patients (confirmed or suspected)
 covid_patients_id <- conditions %>%
   filter(str_detect(DESCRIPTION, regex("COVID", ignore_case = TRUE))) %>%
@@ -70,8 +86,8 @@ county_distribution <- covid_patients_with_county %>%
 #I use count() to summarise the total number of patients per county. The result is sorted in descending order to identify the most affected areas.
 
 # 4. Display county summary table
-kable(county_distribution, caption = "Distribution of COVID patients across counties") %>%
-kable_styling(full_width = FALSE)
+kable(county_distribution, caption = "Distribution of COVID patients across counties",
+      align = c("c", "c")) 
 #The table clearly shows how COVID-19 cases vary by county. I use kable() for neat and professional formatting suitable for reports.
 # 5. Create the histogram (bar chart) visualization for County distribution
 county_plot <- county_distribution %>%
@@ -82,13 +98,13 @@ county_plot <- county_distribution %>%
        y = "Number of COVID Patients") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8)) 
-
+county_plot
 #A bar chart (histogram-style) visualises the concentration of COVID-19 patients by county. It highlights which geographic areas have the highest case volumes.
 ```
-##Interpretation 
+## Interpretation 
 The histogram clearly illustrates that the distribution of COVID-19 patients is highly uneven (skewed) across the counties. There is a significant disparity in patient counts, with Middlesex County reporting over 1,500 cases, which is substantially higher than other large counties like Worcester and over a hundred times greater than the sparsely populated counties of Dukes and Nantucket. This stark difference is primarily attributable to variations in population size and density, as major metropolitan areas typically serve as hubs for both residence and service use, leading to higher population totals and consequently, higher absolute case counts.
-##Analysis 2: the distribution of patients across age groups (e.g., 0-18,19-35, 36-50, 51+)
-```{r}
+## Analysis 2: the distribution of patients across age groups (e.g., 0-18,19-35, 36-50, 51+)
+```{r, fig.align='center', fig.cap='Distribution of COVID patients across Age Group', out.width='90%'}
 #1. Merge patient demographics and calculate age
 reference_date <- as_date("2025-10-17")
 
@@ -119,8 +135,8 @@ age_distribution <- covid_master_data %>%
   count(Age_Group, name = "Patient_Count", sort = FALSE)
 #I ensure each patient is counted once per age group, avoiding duplicate rows. This provides a clear demographic breakdown of the infected population.
 #4. Display the summary table
-kable(age_distribution, caption = "Distribution of COVID patients across Age Group") %>%
-kable_styling(full_width = FALSE)
+kable(age_distribution, caption = "Distribution of COVID patients across Age Group",
+      align = c("c", "c")) 
 #The table summarises how many COVID-19 cases fall into each age bracket. It supports visual interpretation and descriptive commentary.
 #5.Create the histogram (bar chart) visualization for Age distribution
 age_plot <- age_distribution %>%
@@ -130,17 +146,18 @@ age_plot <- age_distribution %>%
                 x = "Age Group",
                 y = "Number of COVID Patients") +
   ggplot2::theme_minimal()
+age_plot
 # This bar chart provides an intuitive visual comparison across age categories.It helps highlight which demographic groups are most affected by COVID-19.
 ```
-##Interpretation
+## Interpretation
 From the plot, we see that The Age Group distribution reveals a bimodal pattern. The highest number of COVID-19 patients falls within the 51+ Age Group (approximately 3,000 cases). This is likely due to the compromised immune systems and higher prevalence of comorbidities typical in older populations, making them more susceptible to infection and severe illness.
 
 Following closely is the 19-35 Age Group (approximately 1,700 cases). This can be attributed to their high mobility and occupational exposure, as they constitute the primary workforce, increasing their likelihood of coming into contact with high-risk environments.
 
 Conversely, the 0-18 Age Group shows the lowest number of cases, potentially reflecting lower social contact rates or lower observed symptoms in children.
 
-###Question 2 
-##Task explanation
+### Question 2 
+## Task explanation
 This question investigates the common non-COVID conditions, primarily the symptoms and comorbidities, that experienced by patients who had confirmed or suspected COVID-19.
 The task involves two main parts:
 
@@ -150,10 +167,9 @@ Comparing the Top 10 conditions by gender to explore whether symptom prevalence 
 
 Through data filtering, grouping, and visualisation, this analysis aims to highlight the most frequent co-occurring health issues among COVID patients and reveal any gender-based variations in health outcomes.
 
-##Analysis 1: Top 5 most common non-COVID conditions among COVID patients
-```{r}
+## Analysis 1: Top 5 most common non-COVID conditions among COVID patients
+```{r, fig.align='center', fig.cap='Top 5 most common non-COVID conditions', out.width='90%'}
 #1. Precheck 
-stopifnot("Id" %in% names(covid_patients_id))
 covid_patients_id <- covid_patients_id %>% distinct(Id)
 #I do this to ensure covid_patients_id exists and is unique per patient
 
@@ -168,19 +184,18 @@ covid_comorbidities <- covid_comorbidities %>%
   filter(!is.na(DESCRIPTION) & DESCRIPTION != "")
 #I standardise text and drop missing values to make frequency counts reliable
 #4. Top 5 most common conditions
-top_conditions_global_occ <- covid_comorbidities %>%
+top_conditions_global <- covid_comorbidities %>%
   count(DESCRIPTION, sort = TRUE) %>%
   slice_head(n = 5)
 #This answers “most common conditions” in terms of how often they appear in the records.
 #5. Display the summary table of top 5 most common conditions other than COVID-19
-kable(top_conditions_global, caption = " Top 5 most common non-COVID conditions among COVID patients") %>%
-kable_styling(full_width = FALSE)
+kable(top_conditions_global, caption = " Top 5 most common non-COVID conditions among COVID patients", align = c("c", "c")) 
 #I use kable() to present the results in a professional, report-ready format. The table clearly present the top 5 most common conditions other than COVID-19 among COVID patients
 ```
-##Interpretation
+## Interpretation
 From the table, we see that top 5 most common non-COVID conditions among COVID patients are "Fever", "Cough", "Loss of taste", "Fatigue", and "Body mass index 30+ - obesity"
-##Analysis 2: Top 10 Non-COVID Conditions by Gender
-```{r}
+## Analysis 2: Top 10 Non-COVID Conditions by Gender
+```{r, fig.align='center', fig.cap='Top 10 Non-COVID Conditions by Gender (Unique Patients)', out.width='90%'}
 #1. Join the COVID comorbidities dataset with patient demographics to access gender.
 comorb_with_gender <- covid_comorbidities %>%
   left_join(patients %>% select(Id, GENDER), by = c("PATIENT" = "Id"))
@@ -197,9 +212,8 @@ top10_by_gender <- comorb_with_gender %>%
 kable(
   top10_by_gender %>% arrange(GENDER, desc(n)),
   caption = "Top 10 Non-COVID Conditions by Gender (Unique Patients)",
-  col.names = c("Gender", "Condition", "Unique Patients")
-) %>%
-  kable_styling(full_width = FALSE)
+  col.names = c("Gender", "Condition", "Unique Patients"),
+  align = c("c", "c")) 
 #I use kable() to present the results in a professional, report-ready format. The table clearly compares the top 10 conditions between male and female COVID patients.
 #4. Create a bar chart comparing condition counts by gender
 ggplot(top10_by_gender, aes(x = reorder(DESCRIPTION, n), y = n, fill = GENDER)) +
@@ -214,30 +228,68 @@ ggplot(top10_by_gender, aes(x = reorder(DESCRIPTION, n), y = n, fill = GENDER)) 
 #A horizontal bar chart provides an intuitive visual comparison of the top 10 non-COVID symptoms for each gender. This helps highlight any gender-based differences in condition frequency.
 ```
 
-##Interpretation
+## Interpretation
 The analysis of non-COVID conditions among COVID-affected patients reveals several key patterns.
 Across the overall cohort, the most frequent conditions—fever, cough, loss of taste, and fatigue—represent the classic symptomatic profile of COVID-19 infection. These findings confirm that the dataset accurately captures realistic symptom and comorbidity patterns.
 When comparing results by gender, both male and female patients exhibit similar top-ranked symptoms, but notable differences emerge in specific conditions.
 Female patients report slightly higher frequencies of fatigue, loss of taste, and reproductive-related conditions such as miscarriage in the first trimester, whereas male patients show greater prevalence of obesity, hypertension, and dyspnea.
 These variations may reflect biological and hormonal differences as well as behavioural and lifestyle factors influencing health outcomes.
-###Question 3
-##Task explaination 
 
-##Analysis 1
+### Question 3
+## Task explanation 
+This question explores the factors that might influence the hospitalisation rate among patients who had confirmed or suspected COVID-19.
+The analysis focuses on comparing how selected demographic and social variables—such as age, gender, marital status, race, zip code, or county—relate to the type of health service encounters received (ambulatory, emergency, inpatient, or urgent care).
+
+By examining patterns in encounter types across different demographic groups, this task aims to uncover whether certain groups are more likely to experience hospitalisation or require emergency care, thereby revealing potential inequalities in healthcare access or severity of illness.
+## Analysis: Factors influencing hospitalisation rate
 ```{r}
+#1. Filter encounters of COVID patients only
+# Keep encounters linked to patients who had confirmed or suspected COVID
+covid_encounters <- encounters %>%
+  semi_join(covid_patients_id, by = c("PATIENT" = "Id"))
 
+# Confirm encounter types distribution
+table(covid_encounters$ENCOUNTERCLASS)
+# This ensures I only analyse encounter data related to COVID-affected patients.
+#2. Merge with patient demographic data
+# Join patients details (e.g., age, gender, race, marital status)
+reference_date <- Sys.Date()
+
+covid_enc_master <- encounters %>%
+  semi_join(covid_patients_id, by = c("PATIENT" = "Id")) %>%
+  left_join(
+    covid_master_data %>% select(Id, Age_Group, GENDER, RACE, MARITAL, ZIP, COUNTY),
+    by = c("PATIENT" = "Id")
+  )
+# I combine demographic and encounter details for analysis.
+#3. Select Age Group and Gender as predictors to analyse
+# Count how many encounters of each class occur within each age-gender group
+encounter_summary <- covid_enc_master %>%
+  filter(ENCOUNTERCLASS %in% c("ambulatory","emergency","inpatient","urgent care")) %>%
+  group_by(Age_Group, GENDER, ENCOUNTERCLASS) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  group_by(Age_Group, GENDER) %>%
+  mutate(Proportion = Count / sum(Count))
+# The dataset now shows the relative frequency of each encounter type by age and gender.
+#4. Visualise results
+# Create a grouped bar chart comparing encounter type proportions
+ggplot(encounter_summary, aes(x = ENCOUNTERCLASS, y = Proportion, fill = GENDER)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ Age_Group) +
+  labs(title = "Proportion of Encounter Types by Age Group and Gender",
+       x = "Encounter Type",
+       y = "Proportion of Encounters",
+       fill = "Gender") +
+  theme_minimal()
+# This chart visually compares how hospitalisation and encounter types vary across demographics.
 ```
-##Interpretation
-
-##Analysis 2
-```{r}
-
-```
-
-##Interpretation
-
-###Question 4
-##Task explaination
+## Interpretation
+The results show that ambulatory encounters are the most common across all age groups, indicating most COVID-19 cases required only outpatient care.
+Older patients (51+) have slightly higher proportions of inpatient and emergency visits, reflecting greater illness severity.
+Gender differences are small, but males show marginally more inpatient encounters, while females are more likely to attend ambulatory visits.
+Overall, both age and gender influence hospitalisation patterns, with older adults—especially males—more likely to require hospital care.
+### Question 4
+## Task explanation
 
 ##
 ```{r}
@@ -247,4 +299,3 @@ These variations may reflect biological and hormonal differences as well as beha
 ##Interpretation
 
 
-#From the table we see that top 5 common conditions are Fever, Cough, Loss of taste, 
